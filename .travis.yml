@@ -1,0 +1,47 @@
+language: cpp
+git:
+  depth: 1
+
+# branch specific config files
+branches:
+# over time we'll migrate to "except" and only exclude old branches
+#  except:
+#    - master
+  only:
+    - android_linux
+    - vulkan
+
+matrix:
+  include:
+
+  - os: linux
+    dist: trusty
+    compiler: clang
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-4.9
+    sudo: required
+    env: TARGET="trusty"
+
+#- os: linux
+#    dist: trusty
+#    sudo: required
+#    env: TARGET="yakkety"
+#    services: docker
+
+  - os: osx
+    compiler: clang
+    env: TARGET="osx"
+    osx_image: xcode7.3
+
+
+install:
+  - if [ "$TARGET" == "trusy" ]; then
+      tools/ci/$TARGET/dependencies.sh
+    fi
+
+script:
+  - tools/ci/cmake.sh -DCINDER_BUILD_SAMPLES:BOOL=1 && make check
