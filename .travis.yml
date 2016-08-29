@@ -40,7 +40,7 @@ matrix:
 
 
 install:
-  - if [ "$TARGET" == "trusy" ]; then
+  - if [ "$TARGET" == "trusty" ]; then
       tools/ci/$TARGET/dependencies.sh;
     fi
 
