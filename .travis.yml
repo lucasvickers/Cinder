@@ -41,7 +41,7 @@ matrix:
 
 install:
   - if [ "$TARGET" == "trusy" ]; then
-      tools/ci/$TARGET/dependencies.sh
+      tools/ci/$TARGET/dependencies.sh;
     fi
 
 script:
