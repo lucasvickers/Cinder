@@ -518,6 +518,7 @@ ostream& operator<<( ostream &os, const Location &rhs )
 {
 	os << rhs.getFunctionName() << "[" << rhs.getLineNumber() << "]";
 	return os;
+	ggg
 }
 
 ostream& operator<<( ostream &lhs, const Level &rhs )
