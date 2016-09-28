@@ -4,6 +4,20 @@ git:
 
 matrix:
   fast_finish: false
+
+  # build out OS X support in complete matrix
+  - os: osx
+    compiler:
+      - clang
+      - gcc
+    osx_image: 
+      - xcode6.4
+      - xcode7
+      - xcode7.1
+      - xcode7.2
+      - xcode7.3
+      - xcode8
+
   include:
 
   - os: linux
@@ -24,23 +38,17 @@ matrix:
 #    env: TARGET="yakkety"
 #    services: docker
 
-  - os: osx
-    compiler:
-      - clang
-      - gcc
-    env: TARGET="osx"
-    osx_image: 
-      - xcode6.4
-      - xcode7
-      - xcode7.1
-      - xcode7.2
-      - xcode7.3
-      - xcode8
-
 install:
   - if [ "$TARGET" == "trusty" ]; then
       tools/ci/$TARGET/dependencies.sh;
     fi
 
 script:
-  - tools/ci/cmake.sh -DCINDER_BUILD_SAMPLES:BOOL=1 && make check
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      # TODO add building and testing of unit tests
+      xcode/fullbuild.sh
+    else
+      #build this out for further linux support
+      # TODO add debug and release here
+      tools/ci/cmake.sh -DCINDER_BUILD_SAMPLES:BOOL=1 && make check
+    fi
