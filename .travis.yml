@@ -44,7 +44,7 @@ matrix:
 
 install:
   - if [ "$TARGET" == "trusty" ]; then
-      tools/ci/$TARGET_dependencies.sh;
+      tools/ci/"$TARGET"_dependencies.sh;
     fi
 
 script:
