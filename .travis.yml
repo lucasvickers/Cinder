@@ -2,9 +2,10 @@ language: cpp
 git:
   depth: 1
 
-matrix:
-  fast_finish: false
+fast_finish: false
 
+matrix:
+  
   # build out OS X support in complete matrix
   - os: osx
     compiler:
