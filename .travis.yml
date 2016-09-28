@@ -4,23 +4,23 @@ git:
 
 fast_finish: false
 
+
+# OS X has no version unique dependencies, so we are able to use matrix
+os: osx
+
+compiler:
+  - clang
+  - gcc
+
+osx_image: 
+  - xcode6.4
+  - xcode7
+  - xcode7.1
+  - xcode7.2
+  - xcode7.3
+  - xcode8
+
 matrix:
-  
-  # OS X has no version unique dependencies, so we are able to use matrix
-  os: osx
-  
-  compiler:
-    - clang
-    - gcc
-
-  osx_image: 
-    - xcode6.4
-    - xcode7
-    - xcode7.1
-    - xcode7.2
-    - xcode7.3
-    - xcode8
-
   include:
 
     # linux version have unique dependencies, so we set them up individually
@@ -43,14 +43,14 @@ matrix:
 #    services: docker
 
 install:
-  - if [ "$TARGET" == "trusty" ]; then
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       tools/ci/"$TARGET"_dependencies.sh;
     fi
 
 script:
   # TODO build and test in OS X
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
-      tools/osx/osx_build_test.sh;
-    else
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
       tools/ci/cmake_test.sh;
+    else
+      tools/osx/osx_build_test.sh;
     fi
