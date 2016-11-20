@@ -5,18 +5,18 @@ set( CINDER_TARGET "" CACHE STRING "Target platform to build for." )
 option( CINDER_VERBOSE "Print verbose build configuration messages. " OFF )
 option( BUILD_SHARED_LIBS "Build Cinder as a shared library. " OFF )
 
+include( ${CMAKE_CURRENT_LIST_DIR}/utilities.cmake )
+
 # Set default build type to Debug
 if( NOT CMAKE_BUILD_TYPE )
-	if( CINDER_VERBOSE )
-		message( STATUS "CMAKE_BUILD_TYPE not specified, defaulting to Debug" )
-	endif()
+	ci_log_v( "CMAKE_BUILD_TYPE not specified, defaulting to Debug" )
 	set( CMAKE_BUILD_TYPE Debug CACHE STRING
 		"Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel. "
 		FORCE
 	)
-elseif( CINDER_VERBOSE )
-	message( STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}" )
 endif()
+
+ci_log_v( "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}" )
 
 # If there's a target specified, try to build for that. Otherwise, build based on the current host OS.
 if( CINDER_TARGET )
@@ -60,9 +60,7 @@ endif()
 set( CINDER_TARGET_GL ${CINDER_TARGET_GL_DEFAULT} CACHE STRING "Target GL for the system. Valid options : ogl, es2, es3, es31, es32, es2-rpi" )
 
 if( CINDER_TARGET_GL )
-	if( CINDER_VERBOSE )
-		message( STATUS "CINDER_TARGET_GL: ${CINDER_TARGET_GL}" )
-	endif()
+	ci_log_v( "CINDER_TARGET_GL: ${CINDER_TARGET_GL}" )
 
 	string( TOLOWER "${CINDER_TARGET_GL}" CINDER_TARGET_GL_LOWER )
 	if( "ogl" STREQUAL "${CINDER_TARGET_GL_LOWER}" )
@@ -87,9 +85,7 @@ if( CINDER_TARGET_GL )
 		set( CINDER_GL_CORE TRUE )
 	endif()
 else()
-	if( CINDER_VERBOSE )
-		message( STATUS "No target GL has been set. Defaulting to Core Profile.")
-	endif()
+	ci_log_v( "No target GL has been set. Defaulting to Core Profile.")
 	set( CINDER_GL_CORE TRUE )
 endif()
 
@@ -103,14 +99,17 @@ if( CINDER_LINUX )
 elseif( CINDER_MAC )
 	set( CINDER_TARGET_SUBFOLDER "macosx" )
 elseif( CINDER_ANDROID )
-	set( CINDER_ANDROID_NDK_PLATFORM 21 CACHE STRING "Android NDK Platform version number." )
-	set( CINDER_ANDROID_NDK_ARCH "armeabi-v7a" CACHE STRING "Android NDK target architecture." )
-
-	set( CINDER_TARGET_SUBFOLDER "android-${CINDER_ANDROID_NDK_PLATFORM/CINDER_ANDROID_NDK_ARCH" )
+	#set( CINDER_ANDROID_NDK_PLATFORM 21 CACHE STRING "Android NDK Platform version number." )
+	#set( CINDER_ANDROID_NDK_ARCH "armeabi-v7a" CACHE STRING "Android NDK target architecture." )
+	set( CINDER_TARGET_SUBFOLDER "android/android-${CINDER_ANDROID_NDK_PLATFORM}/${CINDER_ANDROID_NDK_ARCH}" )
 elseif( CINDER_MSW )
-	set( CINDER_TARGET_SUBFOLDER "msw" ) # TODO: place in msw/arch folder (x64 or x86)
+    set( CINDER_ARCH "x86" )
+    if( CMAKE_CL_64 )
+        set( CINDER_ARCH "x64" )
+    endif()
+	set( CINDER_TARGET_SUBFOLDER "msw/${CINDER_ARCH}" ) # TODO: place in msw/arch folder (x64 or x86)
 endif()
 
 # CINDER_LIB_DIRECTORY is the platform-specific, relative path that will be used to define
 # CMAKE_ARCHIVE_OUTPUT_DIRECTORY for libcinder and also specifies where user apps will locate the cinder package
-set( CINDER_LIB_DIRECTORY lib/${CINDER_TARGET_SUBFOLDER}/${CMAKE_BUILD_TYPE}/ )
+set( CINDER_LIB_DIRECTORY "lib/${CINDER_TARGET_SUBFOLDER}/${CMAKE_BUILD_TYPE}/" )

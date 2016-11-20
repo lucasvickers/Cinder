@@ -25,6 +25,8 @@
 #include "cinder/app/linux/AppLinux.h"
 #include "cinder/app/linux/WindowImplLinux.h"
 
+#include "cinder/Log.h"
+
 #include <iostream>
 
 namespace cinder { namespace app {
@@ -33,7 +35,8 @@ class GlfwCallbacks {
 public:
 	
 	static std::map<GLFWwindow*, std::pair<AppImplLinux*,WindowRef>> sWindowMapping;
-
+	static bool sCapsLockDown, sNumLockDown, sScrollLockDown;
+		
 	static void registerWindowEvents( GLFWwindow *glfwWindow, AppImplLinux* cinderAppImpl, const WindowRef& cinderWindow ) {
 		sWindowMapping[glfwWindow] = std::make_pair( cinderAppImpl, cinderWindow );
 
@@ -41,6 +44,7 @@ public:
 		::glfwSetKeyCallback( glfwWindow, GlfwCallbacks::onKeyboard );
 		::glfwSetCursorPosCallback( glfwWindow, GlfwCallbacks::onMousePos );
 		::glfwSetMouseButtonCallback( glfwWindow, GlfwCallbacks::onMouseButton );
+		::glfwSetScrollCallback( glfwWindow, GlfwCallbacks::onMouseWheel );
 	}
 
 	static void unregisterWindowEvents( GLFWwindow *glfwWindow ) {
@@ -62,6 +66,117 @@ public:
 		}
 	}
 
+	//! Translates GLFW \a mods into ci::KeyEvent modifier values
+	static int extractKeyModifiers( int mods )
+	{
+		uint32_t modifiers = 0;
+		if( mods & GLFW_MOD_SHIFT ) {
+			modifiers |= KeyEvent::SHIFT_DOWN;
+		}
+		if( mods & GLFW_MOD_CONTROL ) {
+			modifiers |= KeyEvent::CTRL_DOWN;
+		}
+		if( mods & GLFW_MOD_ALT ) {
+			modifiers |= KeyEvent::ALT_DOWN;
+		}
+		if( mods & GLFW_MOD_SUPER ) {
+			modifiers |= KeyEvent::META_DOWN;
+		}
+		return modifiers;
+	}
+
+	//! Extracts Cinder ci::MouseEvent modifier values from glfwGetKey() calls
+	static int getGlfwKeyModifiersMouse( GLFWwindow *glfwWindow )
+	{
+		int modifiers = 0;
+		if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_SHIFT ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_SHIFT ) ) ) {
+			modifiers |= MouseEvent::SHIFT_DOWN;
+		}
+		if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_CONTROL ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_CONTROL ) ) ) {
+			modifiers |= MouseEvent::CTRL_DOWN;
+		}
+		if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_ALT ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_ALT ) ) ) {
+			modifiers |= MouseEvent::ALT_DOWN;
+		}
+		if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_SUPER ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_SUPER ) )  ) {
+			modifiers |= MouseEvent::META_DOWN;
+		}
+		return modifiers;
+	}
+
+	//! Returns one or fewer ci::MouseEvent mask value to reflect initiating mouse button
+	static int getGlfwMouseInitiator( GLFWwindow *glfwWindow )
+	{
+		int initiator = 0;
+		if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_LEFT ) ) {
+			initiator = MouseEvent::LEFT_DOWN;
+		}
+		else if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE ) ) {
+			initiator = MouseEvent::MIDDLE_DOWN;
+		}
+		else if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_RIGHT ) ) {
+			initiator = MouseEvent::RIGHT_DOWN;
+		}
+		return initiator;
+	}
+
+	//! Returns MouseEvent bitmask to reflect pressed buttons as ci::MouseEvent mask values
+	static int getGlfwMouseButtons( GLFWwindow *glfwWindow )
+	{
+		int modifiers = 0;
+		if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_LEFT ) ) {
+			modifiers |= MouseEvent::LEFT_DOWN;
+		}
+		if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE ) ) {
+			modifiers |= MouseEvent::MIDDLE_DOWN;
+		}
+		if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_RIGHT ) ) {
+			modifiers |= MouseEvent::RIGHT_DOWN;
+		}
+		return modifiers;
+	}
+
+	static int8_t modifyChar( int key, uint32_t modifiers, bool capsLockIsDown )
+	{
+		// Limit char8 to ASCII input for now.
+		int8_t ret = ( key <= 127 ) ? (char)key : 0;
+		if( ret ) {
+			// a letter key
+			bool shiftIsDown = modifiers & KeyEvent::SHIFT_DOWN;
+			if( ret > 64 && ret < 91 && ! ( shiftIsDown ^ capsLockIsDown ) ) {
+					ret += 32;
+			}
+			// other modifiable keys
+			else if( shiftIsDown ) {
+				switch ( ret ) {
+					case '1': ret = '!'; break;
+					case '2': ret = '@'; break;
+					case '3': ret = '#'; break;
+					case '4': ret = '$'; break;
+					case '5': ret = '%'; break;
+					case '6': ret = '^'; break;
+					case '7': ret = '&'; break;
+					case '8': ret = '*'; break;
+					case '9': ret = '('; break;
+					case '0': ret = ')'; break;
+					case '`': ret = '~'; break;
+					case '-': ret = '_'; break;
+					case '=': ret = '+'; break;
+					case '[': ret = '{'; break;
+					case ']': ret = '}'; break;
+					case '\\': ret = '|'; break;
+					case ';': ret = ':'; break;
+					case '\'': ret = '"'; break;
+					case ',': ret = '<'; break;
+					case '.': ret = '>'; break;
+					case '/': ret = '?'; break;
+					default: break;
+				};
+			}
+		}
+		return ret;
+	}
+
 	static void onKeyboard( GLFWwindow *glfwWindow, int key, int scancode, int action, int mods ) {
 		auto iter = sWindowMapping.find( glfwWindow );
 		if( sWindowMapping.end() != iter ) {
@@ -69,27 +184,20 @@ public:
 			auto& cinderWindow = iter->second.second;
 			cinderAppImpl->setWindow( cinderWindow );
 
-			int nativeKeyCode = KeyEvent::translateNativeKeyCode( key );
+			int32_t nativeKeyCode = KeyEvent::translateNativeKeyCode( key );
 			uint32_t char32 = 0;
-			// Limit char8 to ASCII input for now.
-			char char8 = ( key <= 127 ) ? (char)key : 0;
+			
+			if( glfwGetKey( glfwWindow, GLFW_KEY_CAPS_LOCK ) )
+				sCapsLockDown = ! sCapsLockDown;
+			if( glfwGetKey( glfwWindow, GLFW_KEY_NUM_LOCK ) )
+				sNumLockDown = ! sNumLockDown;
+			if( glfwGetKey( glfwWindow, GLFW_KEY_SCROLL_LOCK ) )
+				sScrollLockDown = !sScrollLockDown;
 
-			// Modifiers
-			uint32_t modifiers = 0;
-			if( mods & GLFW_MOD_SHIFT ) {
-				modifiers |= KeyEvent::SHIFT_DOWN;
-			}
-			if( mods & GLFW_MOD_CONTROL ) {
-				modifiers |= KeyEvent::CTRL_DOWN;
-			}
-			if( mods & GLFW_MOD_ALT ) {
-				modifiers |= KeyEvent::ALT_DOWN;
-			}
-			if( mods & GLFW_MOD_SUPER ) {
-				modifiers |= KeyEvent::META_DOWN;
-			}
+			auto modifiers = extractKeyModifiers( mods );
+			auto convertedChar = modifyChar( key, modifiers, sCapsLockDown );
 
-			KeyEvent event( cinderWindow, nativeKeyCode, char32, char8, modifiers, scancode );
+			KeyEvent event( cinderWindow, nativeKeyCode, char32, convertedChar, modifiers, scancode );
 			if( GLFW_PRESS == action ) {
 				cinderWindow->emitKeyDown( &event );
 			}
@@ -106,40 +214,8 @@ public:
 			auto& cinderWindow = iter->second.second;
 			cinderAppImpl->setWindow( cinderWindow );
 
-			int initiator = 0;
-			if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_LEFT ) ) {
-				initiator = MouseEvent::LEFT_DOWN;
-			}
-			else if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE ) ) {
-				initiator = MouseEvent::MIDDLE_DOWN;
-			}
-			else if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_RIGHT ) ) {
-				initiator = MouseEvent::RIGHT_DOWN;
-			}
-
-			int modifiers = 0;
-			if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_LEFT ) ) {
-				modifiers |= MouseEvent::LEFT_DOWN;
-			}
-			if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE ) ) {
-				modifiers |= MouseEvent::MIDDLE_DOWN;
-			}
-			if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_RIGHT ) ) {
-				modifiers |= MouseEvent::RIGHT_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_SHIFT ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_SHIFT ) ) ) {
-				modifiers |= MouseEvent::SHIFT_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_CONTROL ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_CONTROL ) ) ) {
-				modifiers |= MouseEvent::CTRL_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_ALT ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_ALT ) ) ) {
-				modifiers |= MouseEvent::ALT_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_SUPER ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_SUPER ) )  ) {
-				modifiers |= MouseEvent::META_DOWN;
-			}
-
+			int initiator = getGlfwMouseInitiator( glfwWindow );
+			int modifiers = getGlfwMouseButtons( glfwWindow ) | getGlfwKeyModifiersMouse( glfwWindow );
 			MouseEvent event( getWindow(), initiator, (int)mouseX, (int)mouseY, modifiers, 0.0f, 0 );
 			if( 0 != initiator ) {
 				cinderWindow->emitMouseDrag( &event );
@@ -166,29 +242,7 @@ public:
 				case GLFW_MOUSE_BUTTON_MIDDLE : initiator = MouseEvent::MIDDLE_DOWN; break;
 				case GLFW_MOUSE_BUTTON_RIGHT  : initiator = MouseEvent::RIGHT_DOWN;  break;
 			}
-
-			int modifiers = 0;
-			if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_LEFT ) ) {
-				modifiers |= MouseEvent::LEFT_DOWN;
-			}
-			if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE ) ) {
-				modifiers |= MouseEvent::MIDDLE_DOWN;
-			}
-			if( GLFW_PRESS == glfwGetMouseButton( glfwWindow, GLFW_MOUSE_BUTTON_RIGHT ) ) {
-				modifiers |= MouseEvent::RIGHT_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_SHIFT ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_SHIFT ) ) ) {
-				modifiers |= MouseEvent::SHIFT_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_CONTROL ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_CONTROL ) ) ) {
-				modifiers |= MouseEvent::CTRL_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_ALT ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_ALT ) ) ) {
-				modifiers |= MouseEvent::ALT_DOWN;
-			}
-			if( ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_LEFT_SUPER ) ) || ( GLFW_PRESS == glfwGetKey( glfwWindow, GLFW_KEY_RIGHT_SUPER ) )  ) {
-				modifiers |= MouseEvent::META_DOWN;
-			}
+			int modifiers = getGlfwMouseButtons( glfwWindow ) | getGlfwKeyModifiersMouse( glfwWindow );
 
 			if( 0 != initiator ) {
 				MouseEvent event( getWindow(), initiator, (int)mouseX, (int)mouseY, modifiers, 0.0f, 0 );
@@ -201,9 +255,30 @@ public:
 			}
 		}
 	}
+
+	static void onMouseWheel(GLFWwindow* glfwWindow, double xoffset, double yoffset ) {
+		auto iter = sWindowMapping.find( glfwWindow );
+		if( sWindowMapping.end() != iter ) {
+			auto& cinderAppImpl = iter->second.first;
+			auto& cinderWindow = iter->second.second;
+			cinderAppImpl->setWindow( cinderWindow );
+
+			double mouseX, mouseY;
+			::glfwGetCursorPos( glfwWindow, &mouseX, &mouseY );
+
+			int modifiers = getGlfwMouseButtons( glfwWindow ) | getGlfwKeyModifiersMouse( glfwWindow );
+
+			float wheelDelta = xoffset + yoffset;
+			MouseEvent event( getWindow(), 0, (int)mouseX, (int)mouseX, modifiers, wheelDelta , 0 );
+			cinderWindow->emitMouseWheel( &event );	
+		}
+	}
 };
 
 std::map<GLFWwindow*, std::pair<AppImplLinux*,WindowRef>> GlfwCallbacks::sWindowMapping;
+bool GlfwCallbacks::sCapsLockDown = false;
+bool GlfwCallbacks::sNumLockDown = false;
+bool GlfwCallbacks::sScrollLockDown = false;
 
 ////////////////////////////////////////////////////////////////////////////////
 // AppImplLinux
@@ -251,6 +326,7 @@ AppImplLinux::AppImplLinux( AppLinux *aApp, const AppLinux::Settings &settings )
 
 AppImplLinux::~AppImplLinux()
 {
+	::glfwTerminate();
 }
 
 AppLinux *AppImplLinux::getApp()
@@ -325,11 +401,10 @@ void AppImplLinux::run()
 	}
 
   terminate:
+	mApp->emitCleanup();
 	// Destroy the main window - this should resolve to
 	// a call for ::glfwDestroyWindow( ... );
 	mMainWindow.reset();
-
-	::glfwTerminate();
 }
 
 RendererRef AppImplLinux::findSharedRenderer( const RendererRef &searchRenderer )

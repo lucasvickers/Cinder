@@ -62,14 +62,14 @@ list( APPEND SRC_SET_CINDER
 	${CINDER_SRC_DIR}/cinder/Xml.cpp
 )
 
-if( NOT CINDER_LINUX )
+if( ( NOT CINDER_LINUX ) AND ( NOT CINDER_ANDROID ) )
 	list( APPEND SRC_SET_CINDER
 		${CINDER_SRC_DIR}/cinder/Capture.cpp
 		${CINDER_SRC_DIR}/cinder/Serial.cpp
 	)
 endif()
 
-if( NOT CINDER_MSW )
+if( ( NOT CINDER_MSW ) AND ( NOT CINDER_ANDROID ) )
 	list( APPEND SRC_SET_CINDER
 		${CINDER_SRC_DIR}/cinder/UrlImplCurl.cpp
 	)
@@ -371,6 +371,27 @@ if( NOT CINDER_FREETYPE_USE_SYSTEM )
 	source_group( "thirdparty\\freetype" FILES  ${SRC_SET_FREETYPE} )
 
 endif() # ! CINDER_FREETYPE_USE_SYSTEM
+
+list( APPEND SRC_SET_ZLIB
+	${CINDER_SRC_DIR}/zlib-1.2.8/adler32.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/compress.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/crc32.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/deflate.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/gzclose.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/gzlib.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/gzread.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/gzwrite.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/infback.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/inffast.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/inflate.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/inftrees.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/trees.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/uncompr.c
+	${CINDER_SRC_DIR}/zlib-1.2.8/zutil.c
+)
+
+list( APPEND CINDER_SRC_FILES           ${SRC_SET_ZLIB}	)
+source_group( "thirdparty\\zlib" FILES  ${SRC_SET_ZLIB} )
 
 # ----------------------------------------------------------------------------------------------------------------------
 # r8brain
