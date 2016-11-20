@@ -1,1 +1,0 @@
-./xcode/fullbuild.sh
