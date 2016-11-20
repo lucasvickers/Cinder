@@ -42,7 +42,7 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       tools/linux/scripts/"$TARGET"-install-deps.sh;
     elif [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      brew update && brew install cmake;
+      tools/osx/scripts/cmake-brew-install.sh;
     fi
 
 script:

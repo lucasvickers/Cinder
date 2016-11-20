@@ -13,6 +13,6 @@ cd build-release
 cmake .. -DCINDER_VERBOSE:BOOL=1 -DCMAKE_BUILD_TYPE=Release -DCINDER_BUILD_TESTS=1 -DCINDER_BUILD_ALL_SAMPLES=1
 make -j4
 # test release
-cmake check
+make check
 # return to root dir
 cd ..
