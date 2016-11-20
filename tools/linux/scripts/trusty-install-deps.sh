@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 # CMake
 sudo add-apt-repository -y ppa:george-edison55/cmake-3.x && \
   sudo apt-get -y update && \

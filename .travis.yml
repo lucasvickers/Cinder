@@ -4,14 +4,6 @@ git:
 
 fast_finish: false
 
-
-# OS X has no version unique dependencies, so we are able to use matrix
-os: osx
-
-compiler:
-  - clang
-  - gcc
-
 matrix:
   include:
 
@@ -53,7 +45,7 @@ matrix:
       osx_image: xcode6.4
 
 install:
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       tools/ci/"$TARGET"-install-deps.sh;
     fi
 
