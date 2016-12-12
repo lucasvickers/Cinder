@@ -322,7 +322,7 @@ TEST_CASE( "signals/Signals" )
 		REQUIRE( sig.getNumSlots() == 2 );
 
 		sig.emit();
-		REQUIRE( accum == 2 );
+		REQUIRE( accum == 20 );
 	}
 
 	SECTION("Signal result collection")
