@@ -39,7 +39,7 @@ void printDistribution( const vector<T> &values, int numBins )
 
 TEST_CASE("Rand", "[noisy]")
 {
-	const int NUM_TESTS = 10000;
+	const int NUM_TESTS = 1000;
 
 	SECTION("Print unsigned integer distribution")
 	{
