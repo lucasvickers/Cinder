@@ -6,9 +6,9 @@
  Redistribution and use in source and binary forms, with or without modification, are permitted provided that
  the following conditions are met:
 
-    * Redistributions of source code must retain the above copyright notice, this list of conditions and
+	* Redistributions of source code must retain the above copyright notice, this list of conditions and
 	the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and
+	* Redistributions in binary form must reproduce the above copyright notice, this list of conditions and
 	the following disclaimer in the documentation and/or other materials provided with the distribution.
 
  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
@@ -131,7 +131,22 @@ class CI_API LoggerFile : public Logger {
 //! LoggerFileRotating will write log messages to a file that is rotated at midnight.
 class CI_API LoggerFileRotating : public LoggerFile {
 public:
-	
+
+	//! Optional parameters provided to LoggerFileRotating()
+	struct Options {
+		//! If true (default) will append to the existing file.  If false, will overwrite the file.
+		Options& appendToExisting( bool b )	{ mCallOnWatch = b; return *this; }
+
+		//! If true (default) will rotate the file every day at midnight.  If false, will rotate the file every application startup.
+		Options&
+
+	private:
+		bool	appendToExisting = true;
+		bool    avoidOverwrite = false;
+		bool    midnightRotation = true;
+		bool    customRotationTimer
+	};
+
 	//! Creates a rotating log file that will rotate when the first logging event occurs after midnight.
 	//! \p formatStr will be passed to strftime to determine the file name.
 	LoggerFileRotating( const fs::path &folder, const std::string &formatStr, bool appendToExisting = true );
