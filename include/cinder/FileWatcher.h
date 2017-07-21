@@ -28,6 +28,7 @@
 #include "cinder/Filesystem.h"
 #include "cinder/Noncopyable.h"
 #include "cinder/Signals.h"
+#include "cinder/FileWatcherService.h"
 
 #include <list>
 #include <vector>
